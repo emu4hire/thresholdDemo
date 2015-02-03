@@ -27,15 +27,16 @@ int main(int argc, char* argv[]){
 	if(!cam.isOpened())
 		return -1;
 
-	Mat frame;
-	Mat edited;
+	Mat frame, gray, edited;
+
 
 	namedWindow("Thresholding Demo", 1);
 
 	for(;;){
 		cam >> frame;
 		if(thresh_type !=5){
-			threshold(frame, edited, thresh_value, max_value, thresh_type);
+			cvtColor(frame, gray, CV_RGB2GRAY);
+			threshold(gray, edited, thresh_value, max_value, thresh_type);
 			imshow("Thresholding Demo", edited);
 		}
 		else
