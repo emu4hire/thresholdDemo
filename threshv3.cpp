@@ -7,7 +7,12 @@ using namespace std;
 
  int main( int argc, char** argv )
  {
-    VideoCapture cap(0); //capture the video from web cam
+   VideoCapture cap;
+
+   if(argc >1)
+	cap.open(argv[1]); //read in video from command line arguments
+   else
+   	cap.open(0); //capture the video from web cam
 
     if ( !cap.isOpened() )  // if not success, exit program
     {
@@ -15,7 +20,7 @@ using namespace std;
          return -1;
     }
 
-    namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+    namedWindow("Control", CV_WINDOW_AUTOSIZE); 
 
   int iLowH = 0;
  int iHighH = 179;
@@ -49,17 +54,17 @@ using namespace std;
         }
    Mat imgHSV;
 
-   cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
+   cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert from BGR to HSV
  
   Mat imgThresholded;
 
-   inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
+   inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold 
       
-  //morphological opening (remove small objects from the foreground)
+  //morphological opening
   erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
   dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
 
-   //morphological closing (fill small holes in the foreground)
+   //morphological closing
   dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
   erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
@@ -68,7 +73,7 @@ using namespace std;
 
         if (waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
        {
-            cout << "esc key is pressed by user" << endl;
+            cout << "Video Steam Ended" << endl;
             break; 
        }
     }
