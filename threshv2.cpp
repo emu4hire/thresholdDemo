@@ -32,18 +32,17 @@ int main(int argc, char ** argv){
 			break;
 		}
 
-		Mat frameHSV;
+		Mat threshGRAY;
 		double Tvalue= (double) value;
 		double Tmax= (double) max;
 		
-		cvtColor(frame, frameHSV, CV_RGB2GRAY);
 		Mat thresh;
 
-		threshold(frameHSV, thresh, Tvalue, Tmax, 0);
+		threshold(frame, thresh, Tvalue, Tmax, 1);
+		cvtColor(thresh, threshGRAY, CV_RGB2GRAY);
+		dilate( threshGRAY, threshGRAY, getStructuringElement(MORPH_RECT, Size(3,3)));
 
-		dilate( thresh, thresh, getStructuringElement(MORPH_RECT, Size(3,3)));
-
-		imshow("Threshholded", thresh);
+		imshow("Threshholded", threshGRAY);
 		imshow("Original", frame);
 
 		if(waitKey(30) == 27)
