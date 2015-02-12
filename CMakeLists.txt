@@ -1,0 +1,15 @@
+project( thresholder )
+cmake_minimum_required(VERSION 2.8)
+
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+link_directories( ${OpenCV_LIB_DIR} )
+add_executable( v1 threshv1.cpp )
+add_executable( v2 threshv2.cpp )
+add_executable( v3 threshv3.cpp )
+
+target_link_libraries( v1 ${OpenCV_LIBS} )
+target_link_libraries( v2 ${OpenCV_LIBS} )
+target_link_libraries( v3 ${OpenCV_LIBS} )
+
+
