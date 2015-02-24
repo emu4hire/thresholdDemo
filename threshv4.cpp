@@ -1,13 +1,19 @@
 #include <iostream>
+#include <stdio.h>
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
 using namespace cv;
 using namespace std;
 
+Mat src;
+
+
 Mat operation(Mat, Scalar, Scalar);
 void saveframe(Mat, Mat, int);
-void callBack(int,int,int,int, void*);
+void callBackThresh(int,int,int,int, void*);
+void callBackOriginal(int, int, int, int, void*);
+void HSVspitter(int, int);
 
 int main( int argc, char** argv ){
 
@@ -27,7 +33,10 @@ int main( int argc, char** argv ){
 
 	namedWindow("Control", CV_WINDOW_AUTOSIZE); 
 	namedWindow("Thresholded Image", CV_WINDOW_AUTOSIZE);
-	setMouseCallback("Thresholded Image", callBack, NULL);		
+	namedWindow("Original", CV_WINDOW_AUTOSIZE);
+
+	setMouseCallback("Original", callBackOriginal, NULL);
+	setMouseCallback("Thresholded Image", callBackThresh, NULL);		
 
 	int iLowH = 0;
 	int iHighH = 179;
@@ -56,6 +65,8 @@ int main( int argc, char** argv ){
 	while (true)
 	{
 		Mat imgOriginal;
+		src= imgOriginal.clone();
+
 		Scalar lower=  Scalar(iLowH, iLowS, iLowV);
 		Scalar upper=  Scalar(iHighH, iHighS, iHighV);
 		bool bSuccess = cap.read(imgOriginal); // read a new frame from video
@@ -112,12 +123,30 @@ int main( int argc, char** argv ){
 
 }
 
-void callBack(int event, int x, int y, int flags, void * userdata){
+void callBackThresh(int event, int x, int y, int flags, void * userdata){
 
 	if(event == EVENT_LBUTTONDOWN)
 		cout<<"MOUSE CLICKED AT:"<<x<<" "<<y<<endl;
 }
 
+void callBackOriginal(int event, int x, int y, int flags, void * userdata){
+	if(event ==EVENT_LBUTTONDOWN){
+		cout<<"MOUSE CLICKED FOR HSV SETTING AT:"<<x<<" "<<y<<endl;
+		HSVspitter(x, y);
+	}		
+}
+
+void HSVspitter(int x, int y){
+
+	Mat HSV= src.clone();
+
+	Vec3b hsv=HSV.at<Vec3b>(x,y);
+	int H=hsv.val[0];
+	int S=hsv.val[1];
+	int V=hsv.val[2];
+
+	cout<<"H: "<<H<<" S: "<<S<<" V: "<<V<<endl;
+}
 /*
 Perform thresholding operations
 */
@@ -126,6 +155,7 @@ Mat operation(Mat imgOriginal, Scalar lower, Scalar upper){
 	//Convert image from BGR to HSV.
 	Mat imgHSV;
         cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert from BGR to HSV
+	src=imgHSV.clone();
 
 	//Threshold HSV images
         Mat imgThresholded;
