@@ -7,6 +7,7 @@ using namespace std;
 
 Mat operation(Mat, Scalar, Scalar);
 void saveframe(Mat, Mat, int);
+void callBack(int,int,int,int, void*);
 
 int main( int argc, char** argv ){
 
@@ -25,7 +26,8 @@ int main( int argc, char** argv ){
 	}
 
 	namedWindow("Control", CV_WINDOW_AUTOSIZE); 
-		
+	namedWindow("Thresholded Image", CV_WINDOW_AUTOSIZE);
+	setMouseCallback("Thresholded Image", callBack, NULL);		
 
 	int iLowH = 0;
 	int iHighH = 179;
@@ -47,6 +49,9 @@ int main( int argc, char** argv ){
 	cvCreateTrackbar("HighV", "Control", &iHighV, 255);
 	
 	int frameNum= 0;
+	int lastX=-1;
+	int lastY=-1;
+	int stupid=0;
 
 	while (true)
 	{
@@ -64,9 +69,8 @@ int main( int argc, char** argv ){
 		//Preform thrsholding operation
 		Mat imgThresholded= operation(imgOriginal, lower, upper);
 
-
 		Moments oMoments=moments(imgThresholded);
-		
+
 		double dM01= oMoments.m01;
 		double dM10= oMoments.m10;
 		double area= oMoments.m00;
@@ -74,10 +78,19 @@ int main( int argc, char** argv ){
 		if(area > 10000){
 			int posX= dM10/area;
 			int posY= dM01/area;
-
-			cout<<posX<<" "<<posY<<endl;
+			
+			if(lastX!=posX || lastY !=posY){
+				lastX=posX;
+				lastY=posY;
+			}
 		}
 
+		if(stupid== 50){
+			cout<<"DETECTED CENTER: "<<lastX<<" "<<lastY<<endl;
+			stupid=0;
+		}
+		else
+			stupid++;
 
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image
@@ -97,6 +110,12 @@ int main( int argc, char** argv ){
 
 	return 0;
 
+}
+
+void callBack(int event, int x, int y, int flags, void * userdata){
+
+	if(event == EVENT_LBUTTONDOWN)
+		cout<<"MOUSE CLICKED AT:"<<x<<" "<<y<<endl;
 }
 
 /*
@@ -128,7 +147,7 @@ Save the orignal and thresholded frames after generating a unique filename.
 */
 void saveframe(Mat imgOriginal, Mat imgThresholded, int frameNum){
 
-	String path= "/home/michael/Desktop/";
+	String path= "./data/images/";
         String ext= ".png";
 
         String number;

@@ -7,9 +7,9 @@ link_directories( ${OpenCV_LIB_DIR} )
 add_executable( v1 threshv1.cpp )
 add_executable( v2 threshv2.cpp )
 add_executable( v3 threshv3.cpp )
+add_executable( v4 threshv4.cpp )
 
 target_link_libraries( v1 ${OpenCV_LIBS} )
 target_link_libraries( v2 ${OpenCV_LIBS} )
 target_link_libraries( v3 ${OpenCV_LIBS} )
-
-
+target_link_libraries( v4 ${OpenCV_LIBS} )
