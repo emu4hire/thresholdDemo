@@ -138,14 +138,15 @@ void callBackOriginal(int event, int x, int y, int flags, void * userdata){
 
 void HSVspitter(int x, int y){
 
-	Mat HSV= src.clone();
+	Mat HSV= src.clone();	
+	Mat ROI= HSV (Rect ((x-5), (y-5), 10, 10));
 
-	Vec3b hsv=HSV.at<Vec3b>(x,y);
-	int H=hsv.val[0];
-	int S=hsv.val[1];
-	int V=hsv.val[2];
+	Scalar ROImean= mean(ROI);
+	
 
-	cout<<"H: "<<H<<" S: "<<S<<" V: "<<V<<endl;
+	cout<<"HSV AVG VALUES: "<<ROImean[0]<<" "<<ROImean[1]<<" "<<ROImean[2]<<endl;
+
+	
 }
 /*
 Perform thresholding operations
