@@ -18,8 +18,8 @@ int inputMode=-1; //0 FOr webcam, 1 for video file.
 int videoFilePath;
 
 
-Mat threshold(int);
-void setThreshold(Scalar, Scalar);
+Mat thresholdOperation(int);
+void onMove(int, void *);
 
 int main(int argc, char ** argv){
 
@@ -106,43 +106,60 @@ int main(int argc, char ** argv){
 	namedWindow("Thresholded", CV_WINDOW_AUTOSIZE);
 	namedWindow("Original", CV_WINDOW_AUTOSIZE);
 
+	int lowA =0;
+	int hiA;
+	if(colorMode == 0) 
+		hiA = 179;
+	else
+		hiA = 255;
+	int lowB= 0;
+	int hiB = 255;
+	int lowC = 0;
+	int hiC = 255;
+
 	if(colorMode == 0){
-		int lowA=0;
-		int lowB=0;
-		int lowC=0;
-		
-		int highA;
-		if(colorMode == 0)
-			highA=179;
-		else
-			highA=255;
-
-		int highB=255;
-		int highC=255;
-		
-                cvCreateTrackbar("Low H/R", "Control", &lowA, 255); 
-                cvCreateTrackbar("High H/R", "Control", &highA, 255);
-
-                cvCreateTrackbar("Low S/G", "Control", &lowB, 255); 
-                cvCreateTrackbar("High S/G", "Control", &highB, 255);
-
-                cvCreateTrackbar("Low V/B", "Control", &lowC, 255); 
-                cvCreateTrackbar("High V/B", "Control", &highC, 255);
-
-		
+		createTrackbar("Low H/R", "Control", &lowA, 179, onMove, (void*) (0));
+		createTrackbar("High H/R", "Control", &hiA, 179, onMove, (void*) (1));
+	}
+	else{
+		createTrackbar("Low H/R", "Control", &lowA, 255, onMove, (void*) (0));
+                createTrackbar("High H/R", "Control", &hiA, 255, onMove, (void*) (1));
 	}
 
+	createTrackbar("Low S/G", "Control", &lowB, 255, onMove, (void*) (2));
+        createTrackbar("High S/G", "Control", &hiB, 255, onMove, (void*) (3));
+	createTrackbar("Low V/B", "Control", &lowC, 255, onMove, (void*) (4));
+        createTrackbar("High V/B", "Control", &hiC, 255, onMove, (void*) (5));
 
-	while(1){
-		if(cap.read(src)){
+	Mat thresholdedImg;
+
+	while(true){
+		bool success = cap.read(src);
+		if(!success){
 			cerr<<"Cannot read frame from video stream"<<endl;
 			break;
 		}
 
-		Mat thresholdedImg= threshold(colorMode);
+		Mat colorImg;		
+
+		if(colorMode == 0)
+			cvtColor(src, colorImg, COLOR_BGR2HSV);
+		else
+			colorImg=src;
+
+		Mat thresholdedImg;
+		inRange(colorImg, lowerBound, upperBound, thresholdedImg);
+ 
+     	        //morphological opening
+	         erode(thresholdedImg,thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+        	 dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+	        //morphological closing
+        	 dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+	         erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		
 		imshow("Original", src);
-		imshow("Thresholded",thresholdedImg);
+		imshow("Thresholded", thresholdedImg);
 
 		if(waitKey(30) ==27){
 			cerr<<"Video Stream Ended"<<endl;
@@ -157,7 +174,7 @@ int main(int argc, char ** argv){
 
 }
 
-Mat threshold(int mode){
+Mat thresholdOperation(int mode){
 
 	Mat colorImg;
 
@@ -171,12 +188,29 @@ Mat threshold(int mode){
 	inRange(colorImg, lowerBound, upperBound, returnImg);
 
 	//morphological opening
-        erode(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-        dilate(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+         erode(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+         dilate(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
         //morphological closing
-        dilate(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-        erode(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
+         dilate(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+	 erode(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 	return returnImg;
+}
+
+void onMove(int val, void * userdata){
+	int num	= *((int*)&userdata);	
+
+	if(num ==0)
+		lowerBound = Scalar(val, lowerBound[1], lowerBound[2]);
+	else if(num ==1)
+		upperBound = Scalar(val, upperBound[1], upperBound[2]);
+        else if(num ==2)
+		lowerBound = Scalar(lowerBound[0], val, lowerBound[2]);
+        else if(num ==3)
+		upperBound = Scalar(upperBound[0], val, upperBound[2]);
+        else if(num ==4)
+		lowerBound = Scalar(lowerBound[0], lowerBound[1], val);
+        else if(num ==5)
+		upperBound = Scalar(upperBound[0], upperBound[1], val);
+
 }
