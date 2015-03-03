@@ -28,6 +28,7 @@ ofstream outMouse;
 
 int mouseX;
 int mouseY;
+bool thresholdSet = false;
 
 void onMove(int, void *);
 void onClickOriginal(int, int, int, int, void *);
@@ -194,8 +195,13 @@ int main(int argc, char ** argv){
 		centerMoment(thresholdedImg,blobX, blobY);
 		//centerFind(thresholdedImg,0, 0);
 	
-
-		rectangle(src, Point(blobX +50, blobY+50), Point(blobX-50, blobY-50),Scalar(93, 240, 76),  CV_FILLED, 8,0);
+			
+		if(thresholdSet ){
+			Mat roi = src(Rect(Point(blobX -50, blobY-50), Point(blobX+50, blobY+50)));
+			Mat color(roi.size(), CV_8UC3, Scalar(0, 255, 43)); 
+	    		double alpha = 0.3;
+			addWeighted(color, alpha, roi, 1.0 - alpha , 0.0, roi); 
+		}
 
 		//Show images. 	
 		imshow("Original", src);
@@ -252,6 +258,7 @@ int main(int argc, char ** argv){
 				upperBound = Scalar(179, 255, 255);
 			else if(colorMode ==1)
 				upperBound = Scalar(255, 255, 255);
+			thresholdSet =false;
 		}
 		//Save frames if user presses s.
 		else if(waitKey(5) ==115){
@@ -270,7 +277,6 @@ int main(int argc, char ** argv){
 //handler for the control trackbars.
 void onMove(int val, void * userdata){
 	int num	= *((int*)&userdata);	
-
 	//Userdata holds the index that we want tos set, so just set the scalar accordingly.
 	if(num ==0)
 		lowerBound = Scalar(val, lowerBound[1], lowerBound[2]);
@@ -313,6 +319,8 @@ void onClickOriginal(int event, int x, int y, int flags, void * userdata){
 			lowerBound = Scalar(ROImean[0] -10, ROImean[1] -10, ROImean[2] -10);
 			upperBound = Scalar(ROImean[0] +10, ROImean[1] +10, ROImean[2] +10);
 		}
+	
+		thresholdSet=true;
 	}
 }
 
