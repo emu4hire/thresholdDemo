@@ -17,8 +17,6 @@ int inputMode=-1; //0 FOr webcam, 1 for video file.
 //File path variables
 int videoFilePath;
 
-
-Mat thresholdOperation(int);
 void onMove(int, void *);
 void onClickOriginal(int, int, int, int, void *);
 
@@ -108,21 +106,23 @@ int main(int argc, char ** argv){
 	namedWindow("Thresholded", CV_WINDOW_AUTOSIZE);
 	namedWindow("Original", CV_WINDOW_AUTOSIZE);
 
-
+	//Variables for holding the trackbar values.  We need 6, whether we're using HSV or RGB, though the max values for the hiA variable are different.
 	int lowA =0;
 	int hiA;
 	if(colorMode == 0) 
 		hiA = 179;
-	else
+	else if(colorMode ==1)
 		hiA = 255;
 	int lowB= 0;
 	int hiB = 255;
 	int lowC = 0;
 	int hiC = 255;
 
+	//Initial values for the threshold ranges.
 	lowerBound = Scalar(lowA, lowB, lowC);
 	upperBound = Scalar(hiA, hiB, hiC);
 
+	//Create relevent trackbars based on colorMode. 
 	if(colorMode == 0){
 		createTrackbar("Low H", "Control", &lowA, 179, onMove, (void*) (0));
 		createTrackbar("High H", "Control", &hiA, 179, onMove, (void*) (1));
@@ -132,7 +132,7 @@ int main(int argc, char ** argv){
 	        createTrackbar("High V", "Control", &hiC, 255, onMove, (void*) (5));
 
 	}
-	else{
+	else if(colorMode == 1){
 		createTrackbar("Low R", "Control", &lowA, 255, onMove, (void*) (0));
                 createTrackbar("High R", "Control", &hiA, 255, onMove, (void*) (1));
 	        createTrackbar("Low G", "Control", &lowB, 255, onMove, (void*) (2));
@@ -144,26 +144,57 @@ int main(int argc, char ** argv){
 
 	setMouseCallback("Original", onClickOriginal, NULL);
 
+	//Loop runs until you can't get another frame from the video source, or a user presses escape.
 	while(true){
+
 		bool success = cap.read(src);
 		if(!success){
 			cerr<<"Cannot read frame from video stream"<<endl;
 			break;
 		}
 
+		//Do color conversion based on colorMOde
 		Mat colorImg;		
-
 		if(colorMode == 0)
 			cvtColor(src, colorImg, COLOR_BGR2HSV);
-		else
+		else if(colorMode == 1)
 			colorImg=src;
 
 		Mat thresholdedImg;
-		thresholdedImg = thresholdOperation(colorMode);
-	
+
+  		inRange(colorImg, lowerBound, upperBound, thresholdedImg);
+
+	        //morphological opening
+       		erode(thresholdedImg,thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+	       	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+	        //morphological closing
+        	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+	        erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+		
+		//Show images. 	
 		imshow("Original", src);
 		imshow("Thresholded", thresholdedImg);
 
+		//Set trackbar variables to reflect any changes that may have happened to the thresholder values.
+		if(colorMode ==0){
+			setTrackbarPos("Low H", "Control", lowerBound[0]);
+			setTrackbarPos("High H", "Control", upperBound[0]);
+			setTrackbarPos("Low S", "Control", lowerBound[1]);
+			setTrackbarPos("High S", "Control", upperBound[1]);
+			setTrackbarPos("Low V", "Control", lowerBound[2]);
+			setTrackbarPos("High V", "Control", upperBound[2]);
+		}
+		else if(colorMode == 1){
+			setTrackbarPos("Low R", "Control", lowerBound[0]);
+			setTrackbarPos("High R", "Control", upperBound[0]);
+			setTrackbarPos("Low G", "Control", lowerBound[1]);
+			setTrackbarPos("High G", "Control", upperBound[1]);
+			setTrackbarPos("Low B", "Control", lowerBound[2]);
+			setTrackbarPos("High B", "Control", upperBound[2]);
+		}
+
+		//If user presses ESC, quit stream. 
 		if(waitKey(30) ==27){
 			cerr<<"Video Stream Ended"<<endl;
 			break;
@@ -171,37 +202,14 @@ int main(int argc, char ** argv){
 
 	}
 
-
 	return 0;
-
-
 }
 
-Mat thresholdOperation(int mode){
-
-	Mat colorImg;
-	if(mode == 0)
-		cvtColor(src, colorImg, COLOR_BGR2HSV);
-	
-	else
-		colorImg=src;
-
-	Mat returnImg;
-	inRange(colorImg, lowerBound, upperBound, returnImg);
-
-	//morphological opening
-         erode(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-         dilate(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
-        //morphological closing
-         dilate(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-	 erode(returnImg, returnImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-	return returnImg;
-}
-
+//handler for the control trackbars.
 void onMove(int val, void * userdata){
 	int num	= *((int*)&userdata);	
 
+	//Userdata holds the index that we want tos set, so just set the scalar accordingly.
 	if(num ==0)
 		lowerBound = Scalar(val, lowerBound[1], lowerBound[2]);
 	else if(num ==1)
@@ -216,7 +224,11 @@ void onMove(int val, void * userdata){
 		upperBound = Scalar(upperBound[0], upperBound[1], val);
 
 }
+
+//Handles onclick events for the "original" window.
 void onClickOriginal(int event, int x, int y, int flags, void * userdata){
+	//If the left mouse is clicked,get the average HSV or RGB values from the area and use them for a new set of threshold ranges.
+
 	if(event == EVENT_LBUTTONDOWN){
 		Mat COLORimg;
 		if(colorMode == 0)
@@ -226,8 +238,17 @@ void onClickOriginal(int event, int x, int y, int flags, void * userdata){
 	        Mat ROI= COLORimg (Rect ((x-5), (y-5), 10, 10));
 
         	Scalar ROImean= mean(ROI);
+
+		//For HSV, use ranges H(14), S(60), V(80).
+		if(colorMode ==0){	
+			lowerBound = Scalar(ROImean[0] - 7, ROImean[1] - 30, ROImean[2] -40);
+			upperBound = Scalar(ROImean[0] +7, ROImean[1] +30, ROImean[2] +40);	
+		}
 		
-		lowerBound = Scalar(ROImean[0] - 7, ROImean[1] - 30, ROImean[2] -40);
-		upperBound = Scalar(ROImean[0] +7, ROImean[1] +30, ROImean[2] +40);
+		//For RGB, use ranges R(20), G(20), B(20). (NEEDS REVISION)
+		else if(colorMode ==1){
+			lowerBound = Scalar(ROImean[0] -10, ROImean[1] -10, ROImean[2] -10);
+			upperBound = Scalar(ROImean[0] +10, ROImean[1] +10, ROImean[2] +10);
+		}
 	}
 }
