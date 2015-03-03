@@ -117,21 +117,27 @@ int main(int argc, char ** argv){
 	int lowC = 0;
 	int hiC = 255;
 
+	lowerBound = Scalar(lowA, lowB, lowC);
+	upperBound = Scalar(hiA, hiB, hiC);
+
 	if(colorMode == 0){
-		createTrackbar("Low H/R", "Control", &lowA, 179, onMove, (void*) (0));
-		createTrackbar("High H/R", "Control", &hiA, 179, onMove, (void*) (1));
+		createTrackbar("Low H", "Control", &lowA, 179, onMove, (void*) (0));
+		createTrackbar("High H", "Control", &hiA, 179, onMove, (void*) (1));
+	        createTrackbar("Low S", "Control", &lowB, 255, onMove, (void*) (2));
+	        createTrackbar("High S", "Control", &hiB, 255, onMove, (void*) (3));
+	        createTrackbar("Low V", "Control", &lowC, 255, onMove, (void*) (4));
+	        createTrackbar("High V", "Control", &hiC, 255, onMove, (void*) (5));
+
 	}
 	else{
-		createTrackbar("Low H/R", "Control", &lowA, 255, onMove, (void*) (0));
-                createTrackbar("High H/R", "Control", &hiA, 255, onMove, (void*) (1));
+		createTrackbar("Low R", "Control", &lowA, 255, onMove, (void*) (0));
+                createTrackbar("High R", "Control", &hiA, 255, onMove, (void*) (1));
+	        createTrackbar("Low G", "Control", &lowB, 255, onMove, (void*) (2));
+	        createTrackbar("High G", "Control", &hiB, 255, onMove, (void*) (3));
+       		createTrackbar("Low B", "Control", &lowC, 255, onMove, (void*) (4));
+	        createTrackbar("High B", "Control", &hiC, 255, onMove, (void*) (5));
+
 	}
-
-	createTrackbar("Low S/G", "Control", &lowB, 255, onMove, (void*) (2));
-        createTrackbar("High S/G", "Control", &hiB, 255, onMove, (void*) (3));
-	createTrackbar("Low V/B", "Control", &lowC, 255, onMove, (void*) (4));
-        createTrackbar("High V/B", "Control", &hiC, 255, onMove, (void*) (5));
-
-	Mat thresholdedImg;
 
 	while(true){
 		bool success = cap.read(src);
@@ -148,15 +154,7 @@ int main(int argc, char ** argv){
 			colorImg=src;
 
 		Mat thresholdedImg;
-		inRange(colorImg, lowerBound, upperBound, thresholdedImg);
- 
-     	        //morphological opening
-	         erode(thresholdedImg,thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-        	 dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
-	        //morphological closing
-        	 dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-	         erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+		thresholdedImg = thresholdOperation(colorMode);
 		
 		imshow("Original", src);
 		imshow("Thresholded", thresholdedImg);
