@@ -20,6 +20,8 @@ int videoFilePath;
 
 Mat thresholdOperation(int);
 void onMove(int, void *);
+void onClickOriginal(int, int, int, int, void *);
+
 
 int main(int argc, char ** argv){
 
@@ -106,6 +108,7 @@ int main(int argc, char ** argv){
 	namedWindow("Thresholded", CV_WINDOW_AUTOSIZE);
 	namedWindow("Original", CV_WINDOW_AUTOSIZE);
 
+
 	int lowA =0;
 	int hiA;
 	if(colorMode == 0) 
@@ -139,6 +142,8 @@ int main(int argc, char ** argv){
 
 	}
 
+	setMouseCallback("Original", onClickOriginal, NULL);
+
 	while(true){
 		bool success = cap.read(src);
 		if(!success){
@@ -155,7 +160,7 @@ int main(int argc, char ** argv){
 
 		Mat thresholdedImg;
 		thresholdedImg = thresholdOperation(colorMode);
-		
+	
 		imshow("Original", src);
 		imshow("Thresholded", thresholdedImg);
 
@@ -175,10 +180,9 @@ int main(int argc, char ** argv){
 Mat thresholdOperation(int mode){
 
 	Mat colorImg;
-
-	if(mode == 0){
+	if(mode == 0)
 		cvtColor(src, colorImg, COLOR_BGR2HSV);
-	}
+	
 	else
 		colorImg=src;
 
@@ -211,4 +215,19 @@ void onMove(int val, void * userdata){
         else if(num ==5)
 		upperBound = Scalar(upperBound[0], upperBound[1], val);
 
+}
+void onClickOriginal(int event, int x, int y, int flags, void * userdata){
+	if(event == EVENT_LBUTTONDOWN){
+		Mat COLORimg;
+		if(colorMode == 0)
+			cvtColor(src, COLORimg, COLOR_BGR2HSV);
+		else
+			COLORimg=src;
+	        Mat ROI= COLORimg (Rect ((x-5), (y-5), 10, 10));
+
+        	Scalar ROImean= mean(ROI);
+		
+		lowerBound = Scalar(ROImean[0] - 7, ROImean[1] - 30, ROImean[2] -40);
+		upperBound = Scalar(ROImean[0] +7, ROImean[1] +30, ROImean[2] +40);
+	}
 }
