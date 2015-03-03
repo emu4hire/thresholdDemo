@@ -210,15 +210,24 @@ int main(int argc, char ** argv){
 			break;
 		}
 		if(waitKey(10) == 99){
-			cerr<<"C"<<endl;
+			cout<<"BEGINING DATA CAPTURE. PLEASE MOUSEOVER CENTER LINE"<<endl;
+			
 		}
 		if(waitKey(10) == 101){
-			cerr<<"E"<<endl;
+			cout<<"ENDING DATA CAPTURE.  ANALYSIS WILL BE COMPLETE AT PROGRAM END"<<endl;
 		}
+		
+		//Set threshold values to defaults if user presses Enter
 		if(waitKey(10) == 13){
-			cerr<<"enter"<<endl;
+			cout<<"RESETING THRESHOLDS TO DEFAULTS"<<endl;
+			lowerBound = Scalar(0,0,0);
+			if(colorMode ==0)
+				upperBound = Scalar(179, 255, 255);
+			else if(colorMode ==1)
+				upperBound = Scalar(255, 255, 255);
 		}
 
+		//Save frames if user presses s.
 		if(waitKey(10) ==115){
 			cout<<"SAVING FRAMES "<<frameNum<<endl;
 			saveFrame(src, thresholdedImg, frameNum);
