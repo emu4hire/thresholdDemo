@@ -1,6 +1,7 @@
 #include<iostream>
 #include"opencv2/highgui/highgui.hpp"
 #include"opencv2/imgproc/imgproc.hpp"
+#include <fstream>
 
 using namespace cv;
 using namespace std;
@@ -17,8 +18,16 @@ int inputMode=-1; //0 FOr webcam, 1 for video file.
 //File path variables
 int videoFilePath;
 
+//capture variables;
+bool capture = false;
+int captureNum= 0; 
+ofstream outCenter; 
+ofstream outMoment; 
+ofstream outMouse;
+
 void onMove(int, void *);
 void onClickOriginal(int, int, int, int, void *);
+void saveFrame(Mat, Mat, int);
 
 
 int main(int argc, char ** argv){
@@ -144,6 +153,7 @@ int main(int argc, char ** argv){
 
 	setMouseCallback("Original", onClickOriginal, NULL);
 
+	int frameNum = 0;
 	//Loop runs until you can't get another frame from the video source, or a user presses escape.
 	while(true){
 
@@ -195,9 +205,24 @@ int main(int argc, char ** argv){
 		}
 
 		//If user presses ESC, quit stream. 
-		if(waitKey(30) ==27){
+		if(waitKey(10) ==27){
 			cerr<<"Video Stream Ended"<<endl;
 			break;
+		}
+		if(waitKey(10) == 99){
+			cerr<<"C"<<endl;
+		}
+		if(waitKey(10) == 101){
+			cerr<<"E"<<endl;
+		}
+		if(waitKey(10) == 13){
+			cerr<<"enter"<<endl;
+		}
+
+		if(waitKey(10) ==115){
+			cout<<"SAVING FRAMES "<<frameNum<<endl;
+			saveFrame(src, thresholdedImg, frameNum);
+			frameNum++;
 		}
 
 	}
@@ -252,3 +277,35 @@ void onClickOriginal(int event, int x, int y, int flags, void * userdata){
 		}
 	}
 }
+
+/*
+Save the orignal and thresholded frames after generating a unique filename.
+*/
+void saveFrame(Mat imgOriginal, Mat imgThresholded, int frameNum){
+        String path= "./data/images/";
+        String ext= ".png";
+
+        String number;
+        ostringstream convert;
+        convert << frameNum;
+        number= convert.str();
+
+        String original= path+"original";
+        String threshed= path+"thresholed";
+        original=original+number;
+        threshed=threshed+number;
+        original=original+ext;
+        threshed=threshed+ext;
+
+        vector<int> params;
+        params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+        params.push_back(9);
+
+
+        if(!imwrite(original, imgOriginal, params))
+                cerr<<"Failed to write original"<<endl;
+
+        if(!imwrite(threshed, imgThresholded, params))
+                cerr<<"Failed to write thresholded"<<endl;
+}
+
