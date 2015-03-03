@@ -1,6 +1,7 @@
 #include<iostream>
 #include"opencv2/highgui/highgui.hpp"
 #include"opencv2/imgproc/imgproc.hpp"
+#include"opencv2/core/core.hpp"
 #include <fstream>
 
 using namespace cv;
@@ -25,9 +26,14 @@ ofstream outCenter;
 ofstream outMoment; 
 ofstream outMouse;
 
+int mouseX;
+int mouseY;
+
 void onMove(int, void *);
 void onClickOriginal(int, int, int, int, void *);
 void saveFrame(Mat, Mat, int);
+void centerMoment(Mat, int &, int &);
+void centerFind(Mat, int &, int &);
 
 
 int main(int argc, char ** argv){
@@ -154,7 +160,10 @@ int main(int argc, char ** argv){
 	setMouseCallback("Original", onClickOriginal, NULL);
 
 	int frameNum = 0;
+	int blobX=-1;
+	int blobY=-1;
 	//Loop runs until you can't get another frame from the video source, or a user presses escape.
+	
 	while(true){
 
 		bool success = cap.read(src);
@@ -182,6 +191,12 @@ int main(int argc, char ** argv){
         	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 	        erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		
+		centerMoment(thresholdedImg,blobX, blobY);
+		//centerFind(thresholdedImg,0, 0);
+	
+
+		rectangle(src, Point(blobX +50, blobY+50), Point(blobX-50, blobY-50),Scalar(93, 240, 76),  CV_FILLED, 8,0);
+
 		//Show images. 	
 		imshow("Original", src);
 		imshow("Thresholded", thresholdedImg);
@@ -205,20 +220,32 @@ int main(int argc, char ** argv){
 		}
 
 		//If user presses ESC, quit stream. 
-		if(waitKey(10) ==27){
+		if(waitKey(5) ==27){
 			cerr<<"Video Stream Ended"<<endl;
 			break;
 		}
-		if(waitKey(10) == 99){
+		//Begin data capture if user presses C.
+		else if(waitKey(5) == 99){
 			cout<<"BEGINING DATA CAPTURE. PLEASE MOUSEOVER CENTER LINE"<<endl;
-			
+			capture = true;
+
+			outCenter.open("./data/captures/center.dat");
+			outMoment.open("./data/captures/moment.dat");
+			outMouse.open("./data/captures/mouse.dat");
 		}
-		if(waitKey(10) == 101){
+		//End data capture if user presses E.
+		else if(waitKey(5) == 101){
 			cout<<"ENDING DATA CAPTURE.  ANALYSIS WILL BE COMPLETE AT PROGRAM END"<<endl;
+			capture = false;
+			captureNum = 0;
+			
+			outCenter.close();
+			outMoment.close();
+			outMouse.close();
 		}
 		
 		//Set threshold values to defaults if user presses Enter
-		if(waitKey(10) == 13){
+		else if(waitKey(5) == 13){
 			cout<<"RESETING THRESHOLDS TO DEFAULTS"<<endl;
 			lowerBound = Scalar(0,0,0);
 			if(colorMode ==0)
@@ -226,16 +253,17 @@ int main(int argc, char ** argv){
 			else if(colorMode ==1)
 				upperBound = Scalar(255, 255, 255);
 		}
-
 		//Save frames if user presses s.
-		if(waitKey(10) ==115){
+		else if(waitKey(5) ==115){
 			cout<<"SAVING FRAMES "<<frameNum<<endl;
 			saveFrame(src, thresholdedImg, frameNum);
 			frameNum++;
 		}
-
+		
+		if(capture) 
+			outMouse<<captureNum<<" "<<mouseX<<" "<<mouseY<<endl;
+			captureNum++;
 	}
-
 	return 0;
 }
 
@@ -262,7 +290,8 @@ void onMove(int val, void * userdata){
 //Handles onclick events for the "original" window.
 void onClickOriginal(int event, int x, int y, int flags, void * userdata){
 	//If the left mouse is clicked,get the average HSV or RGB values from the area and use them for a new set of threshold ranges.
-
+	mouseX = x;
+	mouseY = y;
 	if(event == EVENT_LBUTTONDOWN){
 		Mat COLORimg;
 		if(colorMode == 0)
@@ -318,3 +347,58 @@ void saveFrame(Mat imgOriginal, Mat imgThresholded, int frameNum){
                 cerr<<"Failed to write thresholded"<<endl;
 }
 
+void centerMoment(Mat img, int & x, int & y){
+	Moments oMoments=moments(img);
+
+        double dM01= oMoments.m01;
+        double dM10= oMoments.m10;
+        double area= oMoments.m00;
+        if(area > 10000){
+  	      x =dM10/area;
+              y= dM01/area;
+	}
+	if(capture)
+		outMoment<<captureNum<<" "<<x<<" "<<y<<endl;
+
+}
+
+void centerFind(Mat img, int & x, int & y){
+
+	uchar a, b, c;
+	int firstX, lastX;
+	int firstY, lastY;
+	firstY= -1;
+	lastY=-1;
+
+	for(int i =0; i<img.rows; i++){
+		Vec3b * pixel = img.ptr<Vec3b>(i);
+		firstX= -1;
+		lastX = -1;
+			
+		for(int j = 0; j<img.cols; j++){
+			a=pixel[j][0];
+			b=pixel[j][1];
+			c=pixel[j][2];
+			
+			int A= (int) a;
+			int B = (int) b;
+			int C= (int) c;		
+	
+			if((a >0 || b>0 || c>0)  && capture){
+				if(firstX == -1)
+					firstX =j;
+				else
+					lastX = j;
+		
+				if(firstY == -1)
+					firstY= i;
+				else
+					lastY=i;
+			}
+		}
+	
+		
+	}
+	x = (lastX-firstX)/2 +firstX;
+	y = (lastY - firstY)/2 +firstY;
+}
