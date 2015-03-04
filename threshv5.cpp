@@ -196,7 +196,7 @@ int main(int argc, char ** argv){
 		//centerFind(thresholdedImg,0, 0);
 	
 			
-		if(thresholdSet ){
+		if(thresholdSet &&(blobX +50 < src.cols && blobY+50 < src.rows && blobX -50 > 0 && blobY -50 >0)){
 			Mat roi = src(Rect(Point(blobX -50, blobY-50), Point(blobX+50, blobY+50)));
 			Mat color(roi.size(), CV_8UC3, Scalar(0, 255, 43)); 
 	    		double alpha = 0.3;
