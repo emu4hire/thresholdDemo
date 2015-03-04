@@ -29,6 +29,7 @@ ofstream outMouse;
 int mouseX;
 int mouseY;
 bool thresholdSet = false;
+bool squareCenter = false;
 
 void onMove(int, void *);
 void onClickOriginal(int, int, int, int, void *);
@@ -119,8 +120,19 @@ int main(int argc, char ** argv){
 	//Create our three windows for control of the threshold, display of the original image, and the display of the thresholded image.
 
 	namedWindow("Control", CV_WINDOW_AUTOSIZE);
-	namedWindow("Thresholded", CV_WINDOW_AUTOSIZE);
-	namedWindow("Original", CV_WINDOW_AUTOSIZE);
+	namedWindow("Thresholded", CV_WINDOW_KEEPRATIO);
+	namedWindow("Original", CV_WINDOW_KEEPRATIO);
+
+	if(inputMode == 0){
+		moveWindow("Control", 500, 600);
+		moveWindow("Thresholded", 60, 50);
+		moveWindow("Original", 700, 50);
+	}
+	else if(inputMode ==1){
+		moveWindow("Control", 500, 600);
+		moveWindow("Thresholded", 60, 50);
+		moveWindow("Original", 500, 50);
+	}
 
 	//Variables for holding the trackbar values.  We need 6, whether we're using HSV or RGB, though the max values for the hiA variable are different.
 	int lowA =0;
@@ -196,8 +208,8 @@ int main(int argc, char ** argv){
 		//centerFind(thresholdedImg,0, 0);
 	
 			
-		if(thresholdSet &&(blobX +50 < src.cols && blobY+50 < src.rows && blobX -50 > 0 && blobY -50 >0)){
-			Mat roi = src(Rect(Point(blobX -50, blobY-50), Point(blobX+50, blobY+50)));
+		if(squareCenter&&(blobX +25 < src.cols && blobY+25 < src.rows && blobX -25 > 0 && blobY -25 >0)){
+			Mat roi = src(Rect(Point(blobX -25, blobY-25), Point(blobX+25, blobY+25)));
 			Mat color(roi.size(), CV_8UC3, Scalar(0, 255, 43)); 
 	    		double alpha = 0.3;
 			addWeighted(color, alpha, roi, 1.0 - alpha , 0.0, roi); 
@@ -224,14 +236,15 @@ int main(int argc, char ** argv){
 			setTrackbarPos("Low B", "Control", lowerBound[2]);
 			setTrackbarPos("High B", "Control", upperBound[2]);
 		}
-
+	
+		int c = waitKey(10);
 		//If user presses ESC, quit stream. 
-		if(waitKey(5) ==27){
+		if(c ==27){
 			cerr<<"Video Stream Ended"<<endl;
 			break;
 		}
 		//Begin data capture if user presses C.
-		else if(waitKey(5) == 99){
+		else if(c == 'c'){
 			cout<<"BEGINING DATA CAPTURE. PLEASE MOUSEOVER CENTER LINE"<<endl;
 			capture = true;
 
@@ -240,7 +253,7 @@ int main(int argc, char ** argv){
 			outMouse.open("./data/captures/mouse.dat");
 		}
 		//End data capture if user presses E.
-		else if(waitKey(5) == 101){
+		else if(c == 'e'){
 			cout<<"ENDING DATA CAPTURE.  ANALYSIS WILL BE COMPLETE AT PROGRAM END"<<endl;
 			capture = false;
 			captureNum = 0;
@@ -251,7 +264,7 @@ int main(int argc, char ** argv){
 		}
 		
 		//Set threshold values to defaults if user presses Enter
-		else if(waitKey(5) == 13){
+		else if(c == 13){
 			cout<<"RESETING THRESHOLDS TO DEFAULTS"<<endl;
 			lowerBound = Scalar(0,0,0);
 			if(colorMode ==0)
@@ -259,12 +272,16 @@ int main(int argc, char ** argv){
 			else if(colorMode ==1)
 				upperBound = Scalar(255, 255, 255);
 			thresholdSet =false;
+			squareCenter = false;
 		}
 		//Save frames if user presses s.
-		else if(waitKey(5) ==115){
+		else if(c == 's'){
 			cout<<"SAVING FRAMES "<<frameNum<<endl;
 			saveFrame(src, thresholdedImg, frameNum);
 			frameNum++;
+		}
+		else if(c == 'm'){
+			squareCenter = true;
 		}
 		
 		if(capture) 
