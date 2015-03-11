@@ -2,6 +2,7 @@
 #include"opencv2/highgui/highgui.hpp"
 #include"opencv2/imgproc/imgproc.hpp"
 #include"opencv2/core/core.hpp"
+#include <cmath>
 #include <fstream>
 
 using namespace cv;
@@ -18,13 +19,6 @@ int inputMode=-1; //0 FOr webcam, 1 for video file.
 
 //File path variables
 int videoFilePath;
-
-//capture variables;
-bool capture = false;
-int captureNum= 0; 
-ofstream outCenter; 
-ofstream outMoment; 
-ofstream outMouse;
 
 int mouseX;
 int mouseY;
@@ -76,6 +70,7 @@ int main(int argc, char ** argv){
 				colorMode=1;
 			}
 			else{
+
 				cout<<"Unrecognized option"<<endl;
 			}
 
@@ -120,15 +115,17 @@ int main(int argc, char ** argv){
 	//Create our three windows for control of the threshold, display of the original image, and the display of the thresholded image.
 
 	namedWindow("Control", CV_WINDOW_AUTOSIZE);
-	namedWindow("Thresholded", CV_WINDOW_KEEPRATIO);
-	namedWindow("Original", CV_WINDOW_KEEPRATIO);
-
+	
 	if(inputMode == 0){
+		namedWindow("Thresholded", CV_WINDOW_AUTOSIZE);
+		namedWindow("Original", CV_WINDOW_AUTOSIZE);
 		moveWindow("Control", 500, 600);
 		moveWindow("Thresholded", 60, 50);
 		moveWindow("Original", 700, 50);
 	}
-	else if(inputMode ==1){
+	else if(inputMode == 1){
+		namedWindow("Thresholded", CV_WINDOW_KEEPRATIO);
+		namedWindow("Original", CV_WINDOW_KEEPRATIO);
 		moveWindow("Control", 500, 600);
 		moveWindow("Thresholded", 60, 50);
 		moveWindow("Original", 500, 50);
@@ -176,6 +173,14 @@ int main(int argc, char ** argv){
 	int blobX=-1;
 	int blobY=-1;
 	//Loop runs until you can't get another frame from the video source, or a user presses escape.
+	
+	//capture variables
+
+	bool capture = false;
+	int captureNum= 0;
+	ofstream outCenter;
+	ofstream outMoment;
+	ofstream outMouse;
 	
 	while(true){
 
@@ -256,7 +261,6 @@ int main(int argc, char ** argv){
 		else if(c == 'e'){
 			cout<<"ENDING DATA CAPTURE.  ANALYSIS WILL BE COMPLETE AT PROGRAM END"<<endl;
 			capture = false;
-			captureNum = 0;
 			
 			outCenter.close();
 			outMoment.close();
@@ -284,12 +288,73 @@ int main(int argc, char ** argv){
 			squareCenter = true;
 		}
 		
-		if(capture) 
+		if(capture) {
+			outMoment<<captureNum<<" "<<blobX<<" "<<blobY<<endl;
 			outMouse<<captureNum<<" "<<mouseX<<" "<<mouseY<<endl;
 			captureNum++;
+		}
 	}
+
+	//Preform analysis on captures
+	ifstream inMoment;
+	ifstream inMouse;
+	
+	inMoment.open("./data/captures/moment.dat");
+	inMouse.open("./data/captures/mouse.dat");
+	
+	int in=0;
+	int momentX [captureNum];
+	int momentY [captureNum];
+
+	while(!(inMoment.eof())){
+		inMoment >>in;
+		inMoment >> momentX[in];
+		inMoment >>momentY[in];
+		
+	}
+	
+	in =0;
+	int capMouseX [captureNum];
+	int capMouseY[captureNum];
+
+	while(!(inMouse.eof())){
+		inMouse >>in;
+		inMouse >>capMouseX[in];
+		inMouse >>capMouseY[in];
+	}
+	
+	int diffX [captureNum];
+	int diffY [captureNum];
+
+	cout<<captureNum<<endl;
+	for(int i=0; i<captureNum; i++){
+		diffX[i]= abs(momentX[i] - capMouseX[i]);
+		diffY[i]= abs(momentY[i] - capMouseY[i]);
+		cout<<i<<" "<<diffX[i]<<" "<<diffY[i]<<endl;
+	}
+	
+
+	int meanX=0;
+	int meanY=0;
+
+	for(int j=0; j<captureNum; j++){
+		meanX += diffX[j];
+		meanY += diffY[j];		
+	}
+
+	meanX= meanX /captureNum;
+	meanY= meanY /captureNum;
+	
+	cout<<"AVERAGE X DIFFERENCE= "<<meanX<<endl;
+	cout<<"AVERAGE Y DIFFERENCE= "<<meanY<<endl;
+
+	inMoment.close();
+	inMouse.close();
+
 	return 0;
 }
+
+
 
 //handler for the control trackbars.
 void onMove(int val, void * userdata){
@@ -382,8 +447,6 @@ void centerMoment(Mat img, int & x, int & y){
   	      x =dM10/area;
               y= dM01/area;
 	}
-	if(capture)
-		outMoment<<captureNum<<" "<<x<<" "<<y<<endl;
 
 }
 
@@ -409,7 +472,7 @@ void centerFind(Mat img, int & x, int & y){
 			int B = (int) b;
 			int C= (int) c;		
 	
-			if((a >0 || b>0 || c>0)  && capture){
+			if((a >0 || b>0 || c>0)){
 				if(firstX == -1)
 					firstX =j;
 				else
