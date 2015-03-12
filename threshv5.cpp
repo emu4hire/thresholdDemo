@@ -210,7 +210,8 @@ int main(int argc, char ** argv){
         	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 	        erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		
-		centerFind(thresholdedImg, blobX, blobY);
+		if(squareCenter)
+			centerFind(thresholdedImg, blobX, blobY);
 		//centerMoment(thresholdedImg,blobX, blobY);
 		//centerFind(thresholdedImg,0, 0);
 	
@@ -457,41 +458,33 @@ void centerMoment(Mat img, int & x, int & y){
 
 void centerFind(Mat img, int & x, int & y){
 
-	uchar a, b, c;
-	int firstX, lastX;
-	int firstY, lastY;
-	firstY= -1;
-	lastY=-1;
-
-	for(int i =0; i<img.rows; i++){
-		Vec3b * pixel = img.ptr<Vec3b>(i);
-		firstX= -1;
-		lastX = -1;
-			
-		for(int j = 0; j<img.cols; j++){
-			a=pixel[j][0];
-			b=pixel[j][1];
-			c=pixel[j][2];
-			
-			int A= (int) a;
-			int B = (int) b;
-			int C= (int) c;		
-	
-			if((a >0 || b>0 || c>0)){
-				if(firstX == -1)
-					firstX =j;
-				else
-					lastX = j;
+	int lineX[img.rows];
+	int counter=0;
+	int firstX = -1;
+	int lastX = -1;
+	for(int i=0; i<(img.rows-1);i++){
 		
-				if(firstY == -1)
-					firstY= i;
+		for(int j=0; j<img.cols;j++){
+
+			Scalar pixel = img.at<Scalar>(Point(i, j));
+			int a= (int) pixel[0];
+			int b= (int) pixel[1];
+			int c= (int ) pixel[2];
+	
+			if(a ==0 && b ==0 && c ==0){
+				if(firstX == -1)
+					firstX = j;
 				else
-					lastY=i;
+					lastX = j;	
 			}
 		}
-	
-		
+
+		if(firstX != -1 && lastX != -1){
+			lineX[counter] = (((lastX-firstX)/2) + firstX);
+			counter++;
+		}
 	}
-	x = (lastX-firstX)/2 +firstX;
-	y = (lastY - firstY)/2 +firstY;
+	y= counter/2;
+	x = lineX[y];
+
 }
