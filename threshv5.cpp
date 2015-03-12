@@ -30,6 +30,7 @@ void onClickOriginal(int, int, int, int, void *);
 void saveFrame(Mat, Mat, int);
 void centerMoment(Mat, int &, int &);
 void centerFind(Mat, int &, int &);
+void analyze(int);
 
 
 int main(int argc, char ** argv){
@@ -209,7 +210,8 @@ int main(int argc, char ** argv){
         	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 	        erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		
-		centerMoment(thresholdedImg,blobX, blobY);
+		centerFind(thresholdedImg, blobX, blobY);
+		//centerMoment(thresholdedImg,blobX, blobY);
 		//centerFind(thresholdedImg,0, 0);
 	
 			
@@ -295,64 +297,67 @@ int main(int argc, char ** argv){
 		}
 	}
 
-	//Preform analysis on captures
-	ifstream inMoment;
-	ifstream inMouse;
-	
-	inMoment.open("./data/captures/moment.dat");
-	inMouse.open("./data/captures/mouse.dat");
-	
-	int in=0;
-	int momentX [captureNum];
-	int momentY [captureNum];
-
-	while(!(inMoment.eof())){
-		inMoment >>in;
-		inMoment >> momentX[in];
-		inMoment >>momentY[in];
-		
-	}
-	
-	in =0;
-	int capMouseX [captureNum];
-	int capMouseY[captureNum];
-
-	while(!(inMouse.eof())){
-		inMouse >>in;
-		inMouse >>capMouseX[in];
-		inMouse >>capMouseY[in];
-	}
-	
-	int diffX [captureNum];
-	int diffY [captureNum];
-
-	cout<<captureNum<<endl;
-	for(int i=0; i<captureNum; i++){
-		diffX[i]= abs(momentX[i] - capMouseX[i]);
-		diffY[i]= abs(momentY[i] - capMouseY[i]);
-		cout<<i<<" "<<diffX[i]<<" "<<diffY[i]<<endl;
-	}
-	
-
-	int meanX=0;
-	int meanY=0;
-
-	for(int j=0; j<captureNum; j++){
-		meanX += diffX[j];
-		meanY += diffY[j];		
-	}
-
-	meanX= meanX /captureNum;
-	meanY= meanY /captureNum;
-	
-	cout<<"AVERAGE X DIFFERENCE= "<<meanX<<endl;
-	cout<<"AVERAGE Y DIFFERENCE= "<<meanY<<endl;
-
-	inMoment.close();
-	inMouse.close();
-
 	return 0;
 }
+
+void analyze(int captureNum){
+        //Preform analysis on captures
+        ifstream inMoment;
+        ifstream inMouse;
+
+        inMoment.open("./data/captures/moment.dat");
+        inMouse.open("./data/captures/mouse.dat");
+
+        int in=0;
+        int momentX [captureNum];
+        int momentY [captureNum];
+
+        while(!(inMoment.eof())){
+                inMoment >>in;
+                inMoment >> momentX[in];
+                inMoment >>momentY[in];
+
+        }
+
+        in =0;
+        int capMouseX [captureNum];
+        int capMouseY[captureNum];
+
+        while(!(inMouse.eof())){
+                inMouse >>in;
+                inMouse >>capMouseX[in];
+                inMouse >>capMouseY[in];
+        }
+
+        int diffX [captureNum];
+        int diffY [captureNum];
+
+        cout<<captureNum<<endl;
+        for(int i=0; i<captureNum; i++){
+                diffX[i]= abs(momentX[i] - capMouseX[i]);
+                diffY[i]= abs(momentY[i] - capMouseY[i]);
+        }
+
+
+        int meanX=0;
+        int meanY=0;
+
+        for(int j=0; j<captureNum; j++){
+                meanX += diffX[j];
+                meanY += diffY[j];
+        }
+
+        meanX= meanX /captureNum;
+        meanY= meanY /captureNum;
+
+        cout<<"AVERAGE X DIFFERENCE= "<<meanX<<endl;
+        cout<<"AVERAGE Y DIFFERENCE= "<<meanY<<endl;
+
+        inMoment.close();
+        inMouse.close();
+
+}
+
 
 
 
