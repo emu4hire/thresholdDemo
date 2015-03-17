@@ -35,6 +35,9 @@ int main( int argc, char** argv ){
 	namedWindow("Thresholded Image", CV_WINDOW_AUTOSIZE);
 	namedWindow("Original", CV_WINDOW_AUTOSIZE);
 
+	resizeWindow("Thresholded Image", 500, 500);
+	resizeWindow("Original", 500, 500);
+
 	setMouseCallback("Original", callBackOriginal, NULL);
 	setMouseCallback("Thresholded Image", callBackThresh, NULL);		
 

@@ -113,7 +113,7 @@ Save the orignal and thresholded frames after generating a unique filename.
 */
 void saveframe(Mat imgOriginal, Mat imgThresholded, int frameNum){
 
-	String path= "/home/michael/Desktop/";
+	String path= "./data/images/";
         String ext= ".png";
 
         String number;

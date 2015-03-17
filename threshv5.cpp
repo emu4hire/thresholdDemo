@@ -28,8 +28,8 @@ bool squareCenter = false;
 void onMove(int, void *);
 void onClickOriginal(int, int, int, int, void *);
 void saveFrame(Mat, Mat, int);
-void centerMoment(Mat, int &, int &);
-void centerFind(Mat, int &, int &);
+void centerMoment(Mat &, int &, int &);
+void centerFind(Mat &, int &, int &);
 void analyze(int);
 
 
@@ -210,10 +210,10 @@ int main(int argc, char ** argv){
         	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 	        erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		
-		if(squareCenter)
-			centerFind(thresholdedImg, blobX, blobY);
-		//centerMoment(thresholdedImg,blobX, blobY);
-		//centerFind(thresholdedImg,0, 0);
+	//	if(squareCenter && (frameNum % 60 ==0))
+	//		centerFind(thresholdedImg, blobX, blobY);
+		centerMoment(thresholdedImg,blobX, blobY);
+	
 	
 			
 		if(squareCenter&&(blobX +25 < src.cols && blobY+25 < src.rows && blobX -25 > 0 && blobY -25 >0)){
@@ -297,7 +297,7 @@ int main(int argc, char ** argv){
 			captureNum++;
 		}
 	}
-
+	analyze(captureNum);
 	return 0;
 }
 
@@ -443,7 +443,7 @@ void saveFrame(Mat imgOriginal, Mat imgThresholded, int frameNum){
                 cerr<<"Failed to write thresholded"<<endl;
 }
 
-void centerMoment(Mat img, int & x, int & y){
+void centerMoment(Mat & img, int & x, int & y){
 	Moments oMoments=moments(img);
 
         double dM01= oMoments.m01;
@@ -456,35 +456,35 @@ void centerMoment(Mat img, int & x, int & y){
 
 }
 
-void centerFind(Mat img, int & x, int & y){
-
-	int lineX[img.rows];
-	int counter=0;
-	int firstX = -1;
-	int lastX = -1;
-	for(int i=0; i<(img.rows-1);i++){
-		
-		for(int j=0; j<img.cols;j++){
-
-			Scalar pixel = img.at<Scalar>(Point(i, j));
-			int a= (int) pixel[0];
-			int b= (int) pixel[1];
-			int c= (int ) pixel[2];
+void centerFind(Mat & img, int & x, int & y){
 	
-			if(a ==0 && b ==0 && c ==0){
-				if(firstX == -1)
-					firstX = j;
+	int lineX[img.rows];
+	int lineY[img.rows];
+	int counter=0;
+	int firstX, lastX;
+	
+	for(int i=0; i < img.rows; i++){
+		firstX = -1;
+		lastX = -1;
+		for(int j=0; j<img.cols; j++){
+			Scalar pixel= img.at<Scalar>(Point(i, j));
+			if(((int) pixel[0]) >0 && ((int) pixel[1]) > 0 && ((int) pixel[2] >0)){
+				if(firstX != -1)
+					lastX = j;
 				else
-					lastX = j;	
+					firstX=j;	
 			}
+		
 		}
-
-		if(firstX != -1 && lastX != -1){
-			lineX[counter] = (((lastX-firstX)/2) + firstX);
-			counter++;
+		if(firstX!=-1 && lastX != -1){
+			lineX[counter] = firstX;
+			lineY[counter] = i;
 		}
 	}
-	y= counter/2;
-	x = lineX[y];
 
+	x = lineX[counter/2];
+	y= lineY[counter/2];
+	
+	cout<<x<<" "<<y<<endl;
 }
+
