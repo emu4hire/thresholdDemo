@@ -210,9 +210,9 @@ int main(int argc, char ** argv){
         	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 	        erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		
-	//	if(squareCenter && (frameNum % 60 ==0))
-	//		centerFind(thresholdedImg, blobX, blobY);
-		centerMoment(thresholdedImg,blobX, blobY);
+		if(squareCenter && (frameNum % 60 ==0))
+			centerFind(thresholdedImg, blobX, blobY);
+	//	centerMoment(thresholdedImg,blobX, blobY);
 	
 	
 			
@@ -396,10 +396,10 @@ void onClickOriginal(int event, int x, int y, int flags, void * userdata){
 
         	Scalar ROImean= mean(ROI);
 
-		//For HSV, use ranges H(14), S(60), V(80).
+		//For HSV, use ranges H(14), S(60), V(FULL).
 		if(colorMode ==0){	
-			lowerBound = Scalar(ROImean[0] - 7, ROImean[1] - 30, ROImean[2] -40);
-			upperBound = Scalar(ROImean[0] +7, ROImean[1] +30, ROImean[2] +40);	
+			lowerBound = Scalar(ROImean[0] - 7, ROImean[1] - 30, 0);
+			upperBound = Scalar(ROImean[0] +7, ROImean[1] +30, 255);	
 		}
 		
 		//For RGB, use ranges R(20), G(20), B(20). (NEEDS REVISION)
@@ -457,34 +457,23 @@ void centerMoment(Mat & img, int & x, int & y){
 }
 
 void centerFind(Mat & img, int & x, int & y){
-	
-	int lineX[img.rows];
-	int lineY[img.rows];
+	int avgX=0;
+	int avgY=0;
 	int counter=0;
-	int firstX, lastX;
-	
-	for(int i=0; i < img.rows; i++){
-		firstX = -1;
-		lastX = -1;
-		for(int j=0; j<img.cols; j++){
-			Scalar pixel= img.at<Scalar>(Point(i, j));
-			if(((int) pixel[0]) >0 && ((int) pixel[1]) > 0 && ((int) pixel[2] >0)){
-				if(firstX != -1)
-					lastX = j;
-				else
-					firstX=j;	
+	Scalar pixel;
+
+	for(int i=0; i<img.cols; i++){
+		for(int j=0; j<img.rows; j++){
+			pixel= img.at<Scalar>(Point(i, j));
+			if(pixel[0] != 0 && pixel[1] !=0 && pixel[2] != 0){
+				avgX +=i;
+				avgY +=j;
+				counter++;
 			}
-		
-		}
-		if(firstX!=-1 && lastX != -1){
-			lineX[counter] = firstX;
-			lineY[counter] = i;
 		}
 	}
 
-	x = lineX[counter/2];
-	y= lineY[counter/2];
-	
-	cout<<x<<" "<<y<<endl;
+	x = avgX/counter;
+	y = avgY/counter;
+	cout <<"CENTER "<<x<<" "<<y<<endl;
 }
-
