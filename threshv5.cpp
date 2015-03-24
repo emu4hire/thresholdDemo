@@ -30,6 +30,7 @@ void onClickOriginal(int, int, int, int, void *);
 void saveFrame(Mat, Mat, int);
 void centerMoment(Mat &, int &, int &);
 void centerFind(Mat &, int &, int &);
+void lineFind(Mat &, Mat &);
 void analyze(int);
 
 
@@ -210,9 +211,12 @@ int main(int argc, char ** argv){
         	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 	        erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		
-		if(squareCenter && (frameNum % 60 ==0))
-			centerFind(thresholdedImg, blobX, blobY);
-	//	centerMoment(thresholdedImg,blobX, blobY);
+		//if(squareCenter && (frameNum % 60 ==0))
+		//	centerFind(thresholdedImg, blobX, blobY);
+		//centerMoment(thresholdedImg,blobX, blobY);
+		if(squareCenter){
+			lineFind(thresholdedImg, src);
+		}
 	
 	
 			
@@ -288,7 +292,7 @@ int main(int argc, char ** argv){
 			frameNum++;
 		}
 		else if(c == 'm'){
-			squareCenter = true;
+			squareCenter =true;
 		}
 		
 		if(capture) {
@@ -333,7 +337,6 @@ void analyze(int captureNum){
         int diffX [captureNum];
         int diffY [captureNum];
 
-        cout<<captureNum<<endl;
         for(int i=0; i<captureNum; i++){
                 diffX[i]= abs(momentX[i] - capMouseX[i]);
                 diffY[i]= abs(momentY[i] - capMouseY[i]);
@@ -465,15 +468,40 @@ void centerFind(Mat & img, int & x, int & y){
 	for(int i=0; i<img.cols; i++){
 		for(int j=0; j<img.rows; j++){
 			pixel= img.at<Scalar>(Point(i, j));
-			if(pixel[0] != 0 && pixel[1] !=0 && pixel[2] != 0){
-				avgX +=i;
-				avgY +=j;
+			if(pixel[2] != 0){
 				counter++;
+				cout<<counter<<" "<<i<<" "<<j<<endl;
+			}
+		}
+	}
+}
+
+void lineFind(Mat & img, Mat& src){
+	Scalar pixel;
+	std::vector<Point> points;
+
+	for(int i=0; i<img.cols; i++){
+		for(int j=0; j<img.rows; j++){
+			pixel = img.at<Scalar>(Point(i, j));
+			if(pixel[2] !=0){
+				points.push_back(Point(i, j));
 			}
 		}
 	}
 
-	x = avgX/counter;
-	y = avgY/counter;
-	cout <<"CENTER "<<x<<" "<<y<<endl;
+	Vec4f outVector;
+	fitLine(points, outVector,CV_DIST_L2, 0, 0.01, 0.01);
+
+	double m = max(img.rows, img.cols);
+
+	Point start; 
+	start.x = outVector[2] - m*outVector[0];
+	start.y = outVector[3] - m*outVector[1];
+	
+	Point end;
+	end.x = outVector[2] + m*outVector[0];
+	end.y = outVector[3] + m*outVector[1];
+
+	circle(src, Point(outVector[2], outVector[3]), 10, Scalar(255, 0,0), 1, 8, 0);	
+	line(src, start, end,Scalar(0, 0, 255) ,1, 8, 0);
 }
