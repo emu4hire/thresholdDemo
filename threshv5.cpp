@@ -211,12 +211,7 @@ int main(int argc, char ** argv){
         	dilate(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 	        erode(thresholdedImg, thresholdedImg, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 		
-		//if(squareCenter && (frameNum % 60 ==0))
-		//	centerFind(thresholdedImg, blobX, blobY);
-		//centerMoment(thresholdedImg,blobX, blobY);
-		if(squareCenter){
-			lineFind(thresholdedImg, src);
-		}
+		centerMoment(thresholdedImg,blobX, blobY);
 	
 	
 			
@@ -444,6 +439,16 @@ void saveFrame(Mat imgOriginal, Mat imgThresholded, int frameNum){
 
         if(!imwrite(threshed, imgThresholded, params))
                 cerr<<"Failed to write thresholded"<<endl;
+
+	ofstream out;
+	out.open("bugtest.txt");
+	for(int i=0; i <imgThresholded.rows; i++){
+		for(int j=0; j < imgThresholded.cols; j++){
+			out<<imgThresholded.at<Scalar>(i, j)<<"\t";
+		}
+		out<<endl;
+	}
+	out.close();
 }
 
 void centerMoment(Mat & img, int & x, int & y){

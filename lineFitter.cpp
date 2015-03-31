@@ -9,6 +9,7 @@ using namespace cv;
 int main(int argc, char ** argv){
 	VideoCapture in;
 	VideoWriter out;
+	VideoWriter test;
 
 	if(argc >1){
 		in.open(argv[1]);
@@ -17,7 +18,7 @@ int main(int argc, char ** argv){
 		string::size_type pAt = source.find_last_of('.');
 		const string NAME= source.substr(0, pAt) + "E.avi";
 	
-		out.open(NAME, CV_FOURCC('D', 'I', 'V', 'X') , in.get(CV_CAP_PROP_FPS), Size( (int) in.get(CV_CAP_PROP_FRAME_WIDTH), (int) in.get(CV_CAP_PROP_FRAME_HEIGHT)), true);	
+		out.open(NAME, CV_FOURCC('D', 'I', 'V', 'X') , in.get(CV_CAP_PROP_FPS), Size( (int) in.get(CV_CAP_PROP_FRAME_WIDTH), (int) in.get(CV_CAP_PROP_FRAME_HEIGHT)), true);
 	}
 
 	else
@@ -36,7 +37,6 @@ int main(int argc, char ** argv){
 	while(true){
 		Mat frame;
 		Mat colorImg;
-		Mat threshed;
 
 		bool success = in.read(frame);
 
@@ -46,35 +46,54 @@ int main(int argc, char ** argv){
 		}
 	
 		//Lets do some thresholding.
-	
-		cvtColor(frame, colorImg, COLOR_BGR2HSV);
-
-		inRange(colorImg, Scalar(8, 60, 0), Scalar(22, 120, 255), threshed);
-
-		erode(threshed, threshed, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-		dilate(threshed, threshed, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
-		dilate(threshed, threshed, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-		erode(threshed, threshed, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
-		//It is now time for line doings.
-
-		Scalar pixel;
-		std::vector<Point> points;
 		
-		for(int i=0; i<threshed.cols; i++){
-			for(int j=0; j<threshed.rows; j++){
-				pixel = threshed.at<Scalar>(Point(i, j));
-				if(pixel[2] !=0){
+		cvtColor(frame, colorImg, COLOR_BGR2HSV);
+		
+		for(int i=0; i<colorImg.rows; i++){
+			for(int j=0; j<colorImg.cols; j++){
+
+				Vec3i & pixel = colorImg.at<Vec3i>(Point(j, i));
+
+				if( (pixel[0] > 8 && pixel[0] < 22) && (pixel[1] > 60 && pixel[1] < 120 ) && (pixel[2] > 0 && pixel[2] <255)){
+					pixel[0] = 255;
+					pixel[1] = 0;
+					pixel[2] = 0;
+				}	
+				else{
+					pixel[0] = 0;
+					pixel[1] = 0;
+                                        pixel[2] = 0;
+
+				}
+				colorImg.at<Vec3i>(Point(j, i)) = pixel;
+
+			}
+		}
+		
+		//It is now time for line doings.
+		Vec3i pixel;
+		vector<Point> points;
+		
+		for(int i=0; i<colorImg.cols; i++){
+			for(int j=0; j<colorImg.rows; j++){
+				pixel = colorImg.at<Vec3i>(i, j);
+				if(pixel[0] !=0){
 					points.push_back(Point(i, j));
 				}
 			}
 		}
 
-		Vec4f outVector;
-		fitLine(points, outVector, CV_DIST_L2, 0, 0.01, 0.01);
 		
-		double m = max(threshed.rows, threshed.cols);
+		Point * pointArr = new Point[points.size()];
+		Mat pointMat = Mat(1, points.size(), CV_32F, pointArr);
+		Vec4f outVector;
+
+		fitLine(points, outVector, CV_DIST_L2, 0, 0.01, 0.01);
+
+		float d = sqrt((double)outVector[0]*outVector[0] + (double)outVector[1]*outVector[1]);
+		outVector[0] /= d;
+		outVector[1] /= d;
+		float m = (float) (frame.cols + frame.rows);
 		
 		Point start;
 		start.x = outVector[2] - m*outVector[0];
@@ -84,8 +103,12 @@ int main(int argc, char ** argv){
 		end.x = outVector[2] + m*outVector[0];
 		end.y = outVector[3] + m*outVector[1];
 
+		for(int i=0; i<points.size(); i++){
+			circle(frame, points[i], 2, Scalar(255, 0, 0), CV_FILLED, CV_AA, 0);
+		}	
+	
 		circle(frame, Point(outVector[2], outVector[3]), 10, Scalar(255, 0, 0), 1, 8, 0);
-		line(frame, start, end, Scalar(0, 0, 255), 1, 8, 0 );
+		line(frame, start, end, Scalar(0, 0, 255), 3, CV_AA, 0 );
 	
 		if(count % 100 ==0)
 			cout<<"WRITING FRAME "<<count<<endl;
