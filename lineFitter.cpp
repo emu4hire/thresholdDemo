@@ -13,7 +13,6 @@ int main(int argc, char ** argv){
 
 	if(argc >1){
 		in.open(argv[1]);
-//		int ex= static_cast<int>(in.get(CV_CAP_PROP_FOURCC));
 		const string source = argv[1];
 		string::size_type pAt = source.find_last_of('.');
 		const string NAME= source.substr(0, pAt) + "E.avi";
@@ -31,92 +30,48 @@ int main(int argc, char ** argv){
 	if(!out.isOpened()){
 		cerr<<"Was unable to open video output."<<endl;
 	}
-
-	int count=0;
-
+	
+	int frameNum=0;
 	while(true){
-		Mat frame;
-		Mat colorImg;
-
-		bool success = in.read(frame);
-
-		if(!success){
-			cout<<"VIDEO STREAM COMPLETE"<<endl;
-			break;
-		}
-	
-		//Lets do some thresholding.
+		Mat frame(in.get(CV_CAP_PROP_FRAME_HEIGHT), in.get(CV_CAP_PROP_FRAME_WIDTH), CV_8UC3);
+		Mat color(frame.rows, frame.cols, CV_8UC3);
+		Mat thresh(color.rows, color.cols, CV_8UC3);
 		
-		cvtColor(frame, colorImg, COLOR_BGR2HSV);
-		
-		for(int i=0; i<colorImg.rows; i++){
-			for(int j=0; j<colorImg.cols; j++){
+		in.read(frame);
 
-				Vec3i & pixel = colorImg.at<Vec3i>(Point(j, i));
+		cvtColor(frame, color, CV_BGR2HSV, 3);
 
-				if( (pixel[0] > 8 && pixel[0] < 22) && (pixel[1] > 60 && pixel[1] < 120 ) && (pixel[2] > 0 && pixel[2] <255)){
-					pixel[0] = 255;
-					pixel[1] = 0;
-					pixel[2] = 0;
-				}	
-				else{
-					pixel[0] = 0;
-					pixel[1] = 0;
-                                        pixel[2] = 0;
-
-				}
-				colorImg.at<Vec3i>(Point(j, i)) = pixel;
-
-			}
-		}
-		
-		//It is now time for line doings.
-		Vec3i pixel;
+		Vec3b pixel;
 		vector<Point> points;
-		
-		for(int i=0; i<colorImg.cols; i++){
-			for(int j=0; j<colorImg.rows; j++){
-				pixel = colorImg.at<Vec3i>(i, j);
-				if(pixel[0] !=0){
-					points.push_back(Point(i, j));
+
+		for(int i=0; i<color.rows; i++){
+			for(int j=0; j<color.cols; j++){
+				pixel = color.at<Vec3b>(Point(j,i));	
+				if( (pixel[0] > 8 && pixel[0] < 22) && (pixel[1] > 22 && pixel[1] < 60)){
+					points.push_back(Point(j, i));
+					//thresh.at<Vec3b>(Point(j, i)) = Vec3b(179, 255, 255);	
 				}
+				else{
+					//thresh.at<Vec3b>(Point(j, i)) = Vec3b(0, 0, 0);
+				}
+				
 			}
 		}
 
-		
-		Point * pointArr = new Point[points.size()];
-		Mat pointMat = Mat(1, points.size(), CV_32F, pointArr);
-		Vec4f outVector;
+		for(int k=0; k < points.size(); k++){
+			circle(frame, points[k], 3, Scalar(255, 0, 0), -1,CV_AA, 0);
+		}
 
-		fitLine(points, outVector, CV_DIST_L2, 0, 0.01, 0.01);
 
-		float d = sqrt((double)outVector[0]*outVector[0] + (double)outVector[1]*outVector[1]);
-		outVector[0] /= d;
-		outVector[1] /= d;
-		float m = (float) (frame.cols + frame.rows);
-		
-		Point start;
-		start.x = outVector[2] - m*outVector[0];
-		start.y = outVector[3] - m*outVector[1];
-
-		Point end;
-		end.x = outVector[2] + m*outVector[0];
-		end.y = outVector[3] + m*outVector[1];
-
-		for(int i=0; i<points.size(); i++){
-			circle(frame, points[i], 2, Scalar(255, 0, 0), CV_FILLED, CV_AA, 0);
-		}	
-	
-		circle(frame, Point(outVector[2], outVector[3]), 10, Scalar(255, 0, 0), 1, 8, 0);
-		line(frame, start, end, Scalar(0, 0, 255), 3, CV_AA, 0 );
-	
-		if(count % 100 ==0)
-			cout<<"WRITING FRAME "<<count<<endl;
-
-		count++;
 		out.write(frame);
-	}
 
-	in.release();
-	cout<<argv[1]<<endl;
+		if(frameNum % 100 == 0)
+			cout<<"FRAME "<<frameNum<<endl;
+
+		frameNum++;
+
+	}
+	
+	out.release();
+
 }
