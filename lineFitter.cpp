@@ -35,13 +35,13 @@ int main(int argc, char ** argv){
 	while(true){
 		Mat frame(in.get(CV_CAP_PROP_FRAME_HEIGHT), in.get(CV_CAP_PROP_FRAME_WIDTH), CV_8UC3);
 		Mat color(frame.rows, frame.cols, CV_8UC3);
-		Mat thresh(color.rows, color.cols, CV_8UC3);
 		
 		in.read(frame);
 
 		cvtColor(frame, color, CV_BGR2HSV, 3);
 
 		Vec3b pixel;
+		Vec4f outLine;
 		vector<Point> points;
 
 		for(int i=0; i<color.rows; i++){
@@ -49,14 +49,23 @@ int main(int argc, char ** argv){
 				pixel = color.at<Vec3b>(Point(j,i));	
 				if( (pixel[0] > 8 && pixel[0] < 22) && (pixel[1] > 22 && pixel[1] < 60)){
 					points.push_back(Point(j, i));
-					//thresh.at<Vec3b>(Point(j, i)) = Vec3b(179, 255, 255);	
-				}
-				else{
-					//thresh.at<Vec3b>(Point(j, i)) = Vec3b(0, 0, 0);
-				}
-				
+				}	
 			}
 		}
+		
+		fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+	
+		double m = max(color.rows, color.cols);
+
+		Point p1, p2;
+		
+		p1.x = outLine[2] - m*outLine[0];
+		p1.y = outLine[3] - m*outLine[1];
+
+		p2.x = outLine[2] + m*outLine[0];
+		p2.y = outLine[3] + m*outLine[1];
+		
+		line(frame, p1, p2, Scalar(0, 0, 255), 3, CV_AA, 0);
 
 		for(int k=0; k < points.size(); k++){
 			circle(frame, points[k], 3, Scalar(255, 0, 0), -1,CV_AA, 0);
