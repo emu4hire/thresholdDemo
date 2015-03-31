@@ -53,12 +53,15 @@ int main(int argc, char ** argv){
 			}
 		}
 		
-		fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
-	
-		double m = max(color.rows, color.cols);
+                for(int k=0; k < points.size(); k++){
+                        circle(frame, points[k], 1, Scalar(0, 0, 0), -1,CV_AA, 0);
+                }
 
+		double m = max(color.rows, color.cols);
 		Point p1, p2;
-		
+
+		//Simplest, least squares method (RED).
+		fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
 		p1.x = outLine[2] - m*outLine[0];
 		p1.y = outLine[3] - m*outLine[1];
 
@@ -66,10 +69,30 @@ int main(int argc, char ** argv){
 		p2.y = outLine[3] + m*outLine[1];
 		
 		line(frame, p1, p2, Scalar(0, 0, 255), 3, CV_AA, 0);
+	
 
-		for(int k=0; k < points.size(); k++){
-			circle(frame, points[k], 3, Scalar(255, 0, 0), -1,CV_AA, 0);
-		}
+		//Fair distribution, green
+		fitLine(points, outLine, CV_DIST_FAIR, 0, 0.01, 0.01);
+
+                p1.x = outLine[2] - m*outLine[0];
+                p1.y = outLine[3] - m*outLine[1];
+
+                p2.x = outLine[2] + m*outLine[0];
+                p2.y = outLine[3] + m*outLine[1];
+
+                line(frame, p1, p2, Scalar(0, 255, 0), 3, CV_AA, 0);
+
+		//Wesch's distribution, blue
+		fitLine(points, outLine, CV_DIST_WELSCH, 0, 0.01, 0.01);
+
+                p1.x = outLine[2] - m*outLine[0];
+                p1.y = outLine[3] - m*outLine[1];
+
+                p2.x = outLine[2] + m*outLine[0];
+                p2.y = outLine[3] + m*outLine[1];
+
+                line(frame, p1, p2, Scalar(255,0, 0), 3, CV_AA, 0);
+
 
 
 		out.write(frame);
