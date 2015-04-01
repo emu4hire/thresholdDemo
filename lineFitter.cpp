@@ -6,18 +6,40 @@
 using namespace std;
 using namespace cv;
 
+int distCode=0;
+
 int main(int argc, char ** argv){
 	VideoCapture in;
 	VideoWriter out;
 	VideoWriter test;
 
 	if(argc >1){
-		in.open(argv[1]);
-		const string source = argv[1];
-		string::size_type pAt = source.find_last_of('.');
-		const string NAME= source.substr(0, pAt) + "E.avi";
-	
-		out.open(NAME, CV_FOURCC('D', 'I', 'V', 'X') , in.get(CV_CAP_PROP_FPS), Size( (int) in.get(CV_CAP_PROP_FRAME_WIDTH), (int) in.get(CV_CAP_PROP_FRAME_HEIGHT)), true);
+		int num =1;
+
+		while(num < argc){
+			string input = argv[num];
+
+			if(input == "-l2" || input == "-L2")
+				distCode = 0;
+			else if(input == "-l12" || input == "L12")
+				distCode = 1;
+			else if(input == "-fair" || input == "-FAIR")
+				distCode =2;
+			else if(input == "-welsch" || input == "-WELSCH")
+				distCode =3;
+			else if(input == "-huber" || input == "-HUBER")
+				distCode = 4;
+			else{		
+				in.open(argv[1]);
+				const string source = argv[1];
+				string::size_type pAt = source.find_last_of('.');
+				const string NAME= source.substr(0, pAt) + "E.avi";
+		
+				out.open(NAME, CV_FOURCC('D', 'I', 'V', 'X') , in.get(CV_CAP_PROP_FPS), 
+					Size( (int) in.get(CV_CAP_PROP_FRAME_WIDTH), (int) in.get(CV_CAP_PROP_FRAME_HEIGHT)), true);
+			}
+			num++;
+		}
 	}
 
 	else
@@ -61,40 +83,36 @@ int main(int argc, char ** argv){
 		Point p1, p2;
 
 		//Simplest, least squares method (RED).
-		fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+		if(distCode == 0){
+			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+			putText(frame, "DIST L2 - Least Squares", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+		}
+		else if(distCode == 1){
+			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+			putText(frame, "DIST L12", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+		}
+		else if(distCode == 2){
+			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+			putText(frame, "DIST FAIR", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+		}
+		else if(distCode == 3){
+			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+			putText(frame, "DIST WELSCH", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX,2,  Scalar(255, 255, 255), 1, CV_AA, false);
+		}
+		else if(distCode == 4){
+			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+			putText(frame, "DIST HUBER", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+		}
+
+
 		p1.x = outLine[2] - m*outLine[0];
 		p1.y = outLine[3] - m*outLine[1];
 
 		p2.x = outLine[2] + m*outLine[0];
 		p2.y = outLine[3] + m*outLine[1];
 		
-		line(frame, p1, p2, Scalar(0, 0, 255), 3, CV_AA, 0);
+		line(frame, p1, p2, Scalar(0, 255, 0), 3, CV_AA, 0);
 	
-
-		//Fair distribution, green
-		fitLine(points, outLine, CV_DIST_FAIR, 0, 0.01, 0.01);
-
-                p1.x = outLine[2] - m*outLine[0];
-                p1.y = outLine[3] - m*outLine[1];
-
-                p2.x = outLine[2] + m*outLine[0];
-                p2.y = outLine[3] + m*outLine[1];
-
-                line(frame, p1, p2, Scalar(0, 255, 0), 3, CV_AA, 0);
-
-		//Wesch's distribution, blue
-		fitLine(points, outLine, CV_DIST_WELSCH, 0, 0.01, 0.01);
-
-                p1.x = outLine[2] - m*outLine[0];
-                p1.y = outLine[3] - m*outLine[1];
-
-                p2.x = outLine[2] + m*outLine[0];
-                p2.y = outLine[3] + m*outLine[1];
-
-                line(frame, p1, p2, Scalar(255,0, 0), 3, CV_AA, 0);
-
-
-
 		out.write(frame);
 
 		if(frameNum % 100 == 0)
