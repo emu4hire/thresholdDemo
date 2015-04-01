@@ -60,10 +60,12 @@ int main(int argc, char ** argv){
 
 	if(!in.isOpened()){
 		cerr<<"Was unable to open video input."<<endl;
+		exit(1);
 	}
 	
 	if(!out.isOpened()){
 		cerr<<"Was unable to open video output."<<endl;
+		exit(1);
 	}
 	
 	int frameNum=0;
@@ -71,7 +73,10 @@ int main(int argc, char ** argv){
 		Mat frame(in.get(CV_CAP_PROP_FRAME_HEIGHT), in.get(CV_CAP_PROP_FRAME_WIDTH), CV_8UC3);
 		Mat color(frame.rows, frame.cols, CV_8UC3);
 		
-		in.read(frame);
+		if(!in.read(frame)){
+			cerr<<"CANNOT READ FRAME.  VIDEO STREAM OVER."<<endl;
+			break;
+		}
 
 		cvtColor(frame, color, CV_BGR2HSV, 3);
 
@@ -94,29 +99,31 @@ int main(int argc, char ** argv){
 
 		double m = max(color.rows, color.cols);
 		Point p1, p2;
-
-		//Simplest, least squares method (RED).
-		if(distCode == 0){
-			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
-			putText(frame, "DIST L2 - Least Squares", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+	
+		if(points.size() >0){
+	
+			//Simplest, least squares method (RED).
+			if(distCode == 0){
+				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				putText(frame, "DIST L2 - Least Squares", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+			}
+			else if(distCode == 1){
+				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				putText(frame, "DIST L12", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+			}
+			else if(distCode == 2){
+				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				putText(frame, "DIST FAIR", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+			}
+			else if(distCode == 3){
+				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				putText(frame, "DIST WELSCH", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX,2,  Scalar(255, 255, 255), 1, CV_AA, false);
+			}
+			else if(distCode == 4){
+				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				putText(frame, "DIST HUBER", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
+			}
 		}
-		else if(distCode == 1){
-			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
-			putText(frame, "DIST L12", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
-		}
-		else if(distCode == 2){
-			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
-			putText(frame, "DIST FAIR", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
-		}
-		else if(distCode == 3){
-			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
-			putText(frame, "DIST WELSCH", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX,2,  Scalar(255, 255, 255), 1, CV_AA, false);
-		}
-		else if(distCode == 4){
-			fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
-			putText(frame, "DIST HUBER", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
-		}
-
 
 		p1.x = outLine[2] - m*outLine[0];
 		p1.y = outLine[3] - m*outLine[1];
