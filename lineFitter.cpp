@@ -11,7 +11,6 @@ int distCode=0;
 int main(int argc, char ** argv){
 	VideoCapture in;
 	VideoWriter out;
-	VideoWriter test;
 
 	if(argc >1){
 		int num =1;
@@ -30,11 +29,25 @@ int main(int argc, char ** argv){
 			else if(input == "-huber" || input == "-HUBER")
 				distCode = 4;
 			else{		
-				in.open(argv[1]);
-				const string source = argv[1];
+				in.open(argv[num]);
+				const string source = argv[num];
 				string::size_type pAt = source.find_last_of('.');
-				const string NAME= source.substr(0, pAt) + "E.avi";
-		
+				string NAME = source.substr(0, pAt);
+
+				if(distCode == 0)
+					NAME = NAME + "_L2.avi";
+				else if(distCode == 1)
+					NAME = NAME + "_L12.avi";
+				else if(distCode == 2)
+					NAME = NAME + "_FAIR.avi";
+				else if(distCode == 3)
+					NAME = NAME + "_WELSCH.avi";
+				else if(distCode == 4)
+					NAME = NAME + "_HUBER.avi";
+				else
+					NAME = NAME + "_EDITED.avi";
+	
+				cerr<<NAME<<endl;	
 				out.open(NAME, CV_FOURCC('D', 'I', 'V', 'X') , in.get(CV_CAP_PROP_FPS), 
 					Size( (int) in.get(CV_CAP_PROP_FRAME_WIDTH), (int) in.get(CV_CAP_PROP_FRAME_HEIGHT)), true);
 			}
