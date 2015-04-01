@@ -87,7 +87,7 @@ int main(int argc, char ** argv){
 		for(int i=0; i<color.rows; i++){
 			for(int j=0; j<color.cols; j++){
 				pixel = color.at<Vec3b>(Point(j,i));	
-				if( (pixel[0] > 8 && pixel[0] < 22) && (pixel[1] > 22 && pixel[1] < 60)){
+				if( (pixel[0] > 3 && pixel[0] < 23) && (pixel[1] > 65 && pixel[1] < 145)){
 					points.push_back(Point(j, i));
 				}	
 			}
