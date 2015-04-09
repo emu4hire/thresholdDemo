@@ -81,57 +81,76 @@ int main(int argc, char ** argv){
 		cvtColor(frame, color, CV_BGR2HSV, 3);
 
 		Vec3b pixel;
-		Vec4f outLine;
-		vector<Point> points;
+		Vec4f outLineC, outLineE;
+		vector<Point> pointsC;
+		vector<Point> pointsE;
 
 		for(int i=0; i<color.rows; i++){
 			for(int j=0; j<color.cols; j++){
 				pixel = color.at<Vec3b>(Point(j,i));	
-				if( (pixel[0] > 3 && pixel[0] < 23) && (pixel[1] > 65 && pixel[1] < 145)){
-					points.push_back(Point(j, i));
-				}	
+				if( (pixel[0] > 9 && pixel[0] < 25) && (pixel[1] > 0 && pixel[1] < 169) && (pixel[2] > 169 && pixel[2] < 255)){
+					pointsC.push_back(Point(j, i));
+				}
+				if( (pixel[0] > 36 && pixel[0] < 85) && (pixel[1] > 5 && pixel[1] < 255) && (pixel[2] >208 && pixel[2] <255)){
+					pointsE.push_back(Point(j, i));
+				}
 			}
 		}
 		
-                for(int k=0; k < points.size(); k++){
-                        circle(frame, points[k], 1, Scalar(0, 0, 0), -1,CV_AA, 0);
+                for(int k=0; k < pointsC.size(); k++){
+                        circle(frame, pointsC[k], 1, Scalar(255, 0, 0), -1,CV_AA, 0);
                 }
 
+		for(int k=0; k<pointsE.size(); k++){
+			circle(frame, pointsE[k], 1, Scalar(0, 0, 255), -1, CV_AA, 0);
+		}
+
 		double m = max(color.rows, color.cols);
-		Point p1, p2;
+		Point Cp1, Cp2, Ep1, Ep2;
 	
-		if(points.size() >0){
+		if(pointsC.size() >0){
 	
 			//Simplest, least squares method (RED).
 			if(distCode == 0){
-				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				fitLine(pointsC, outLineC, CV_DIST_L2, 0, 0.01, 0.01);
+				fitLine(pointsE, outLineE, CV_DIST_L2, 0, 0.01, 0.01);
 				putText(frame, "DIST L2 - Least Squares", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
 			}
 			else if(distCode == 1){
-				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				fitLine(pointsC, outLineC, CV_DIST_L12, 0, 0.01, 0.01);
+				fitLine(pointsE, outLineE, CV_DIST_L12, 0, 0.01, 0.01);
 				putText(frame, "DIST L12", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
 			}
 			else if(distCode == 2){
-				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				fitLine(pointsC, outLineC, CV_DIST_FAIR, 0, 0.01, 0.01);
+				fitLine(pointsE, outLineE, CV_DIST_FAIR, 0, 0.01, 0.01);
 				putText(frame, "DIST FAIR", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
 			}
 			else if(distCode == 3){
-				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				fitLine(pointsC, outLineC, CV_DIST_WELSCH, 0, 0.01, 0.01);
+				fitLine(pointsE, outLineE, CV_DIST_WELSCH, 0, 0.01, 0.01);
 				putText(frame, "DIST WELSCH", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX,2,  Scalar(255, 255, 255), 1, CV_AA, false);
 			}
 			else if(distCode == 4){
-				fitLine(points, outLine, CV_DIST_L2, 0, 0.01, 0.01);
+				fitLine(pointsC, outLineC, CV_DIST_HUBER, 0, 0.01, 0.01);
+				fitLine(pointsE, outLineE, CV_DIST_HUBER, 0, 0.01, 0.01);
 				putText(frame, "DIST HUBER", Point(0, frame.rows-100), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 1, CV_AA, false);
 			}
 		}
 
-		p1.x = outLine[2] - m*outLine[0];
-		p1.y = outLine[3] - m*outLine[1];
+		Cp1.x = outLineC[2] - m*outLineC[0];
+		Cp1.y = outLineC[3] - m*outLineC[1];
+		Cp2.x = outLineC[2] + m*outLineC[0];
+		Cp2.y = outLineC[3] + m*outLineC[1];
 
-		p2.x = outLine[2] + m*outLine[0];
-		p2.y = outLine[3] + m*outLine[1];
+		Ep1.x = outLineE[2] - m*outLineE[0];
+		Ep1.y = outLineE[2] - m*outLineE[1];
+		Ep1.x = outLineE[2] - m*outLineE[0];
+		Ep1.y = outLineE[2] - m*outLineE[1];
 		
-		line(frame, p1, p2, Scalar(0, 255, 0), 3, CV_AA, 0);
+		
+		line(frame, Cp1, Cp2, Scalar(0, 255, 0), 3, CV_AA, 0);
+		line(frame, Ep1, Ep2, Scalar(255, 0, 255), 3, CV_AA,0);
 	
 		out.write(frame);
 

@@ -297,6 +297,7 @@ int main(int argc, char ** argv){
 		}
 	}
 	analyze(captureNum);
+	cap.release();
 	return 0;
 }
 
