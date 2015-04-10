@@ -88,10 +88,10 @@ int main(int argc, char ** argv){
 		for(int i=0; i<color.rows; i++){
 			for(int j=0; j<color.cols; j++){
 				pixel = color.at<Vec3b>(Point(j,i));	
-				if( (pixel[0] > 9 && pixel[0] < 25) && (pixel[1] > 0 && pixel[1] < 169) && (pixel[2] > 169 && pixel[2] < 255)){
+				if( j < color.cols && i > color.rows /3 && (pixel[0] > 9 && pixel[0] < 25) && (pixel[1] > 0 && pixel[1] < 169) && (pixel[2] > 169 && pixel[2] < 255)){
 					pointsC.push_back(Point(j, i));
 				}
-				if( (pixel[0] > 36 && pixel[0] < 85) && (pixel[1] > 5 && pixel[1] < 255) && (pixel[2] >208 && pixel[2] <255)){
+				if( j > color.cols / 2 && i > color.rows/3 && (pixel[0] > 28 && pixel[0] < 109) && (pixel[1] > 1 && pixel[1] < 23) && (pixel[2] >200 && pixel[2] <255)){
 					pointsE.push_back(Point(j, i));
 				}
 			}
@@ -102,7 +102,7 @@ int main(int argc, char ** argv){
                 }
 
 		for(int k=0; k<pointsE.size(); k++){
-			circle(frame, pointsE[k], 1, Scalar(0, 0, 255), -1, CV_AA, 0);
+			circle(frame, pointsE[k], 1, Scalar(255, 0, 255), -1, CV_AA, 0);
 		}
 
 		double m = max(color.rows, color.cols);
@@ -144,13 +144,13 @@ int main(int argc, char ** argv){
 		Cp2.y = outLineC[3] + m*outLineC[1];
 
 		Ep1.x = outLineE[2] - m*outLineE[0];
-		Ep1.y = outLineE[2] - m*outLineE[1];
-		Ep1.x = outLineE[2] - m*outLineE[0];
-		Ep1.y = outLineE[2] - m*outLineE[1];
+		Ep1.y = outLineE[3] - m*outLineE[1];
+		Ep2.x = outLineE[2] + m*outLineE[0];
+		Ep2.y = outLineE[3] + m*outLineE[1];
 		
 		
-		line(frame, Cp1, Cp2, Scalar(0, 255, 0), 3, CV_AA, 0);
-		line(frame, Ep1, Ep2, Scalar(255, 0, 255), 3, CV_AA,0);
+		line(frame, Cp1, Cp2, Scalar(0, 0, 255), 3, CV_AA, 0);
+		line(frame, Ep1, Ep2, Scalar( 0, 255,0 ), 3, CV_AA,0);
 	
 		out.write(frame);
 
